@@ -7,7 +7,22 @@ export const fetchTokens = async (): Promise<CoinsData> => {
     // simulate network delay
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve(coinsData);
+            const olderData = localStorage.getItem("tokens");
+            const jsonParsed = JSON.parse(olderData || "null");
+
+            if (jsonParsed !== null && jsonParsed !== undefined) {
+                resolve({
+                    status: "OK",
+                    result: {
+                        totalValue: coinsData.result.totalValue,
+                        tokens: jsonParsed,
+                    }
+                } as CoinsData);
+            }
+            else {
+                localStorage.setItem("tokens", JSON.stringify(coinsData.result.tokens));
+                resolve(coinsData);
+            }
         }, 500);
     });
 };

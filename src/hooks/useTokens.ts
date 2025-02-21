@@ -24,5 +24,5 @@ export const useTokens = () => {
         loadTokens();
     }, []);
 
-    return { tokens, loading, error, refresh: loadTokens };
+    return { tokens, loading, error, refresh: loadTokens, setTokens };
 };

@@ -5,3 +5,5 @@ export function number_format(number: number | string) {
         style: "decimal",
     }).format(Number(number));
 }
+
+export const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay))

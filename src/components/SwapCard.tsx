@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styles from "../styles/swap.module.css";
 import { Token } from "../types/token";
-import { ArrowLeftRight, XIcon } from "lucide-react";
-import { number_format } from "../utils/tools";
+import { ArrowDownUp, ArrowLeftRight, Loader } from "lucide-react";
+import SwapInput from "./SwapInput.tsx";
+import usePersistedState from "../hooks/usePersistedStat.ts";
+import { sleep } from "../utils/tools.ts";
 
 interface SwapCardProps {
     tokens: Token[];
@@ -10,47 +12,66 @@ interface SwapCardProps {
 }
 
 const SwapCard: React.FC<SwapCardProps> = ({ tokens, onSwap }) => {
-    const [sourceToken, setSourceToken] = useState<Token>();
-    const [destToken, setDestToken] = useState<Token>();
-    const [amount, setAmount] = useState("");
-    const [showCoinSelector, setShowCoinSelector] = useState<"source" | "dest" | null>(null);
-
-    useEffect(() => {
-        if (!sourceToken) {
-            setSourceToken(tokens.find((t) => t.name === "USDT"));
-        }
-        if (!destToken) {
-            setDestToken(tokens.find((t) => t.name === "TON"));
-        }
-    }, []);
-
-    // Example function to open coin selector
-    const handleOpenCoinSelector = (type: "source" | "dest") => {
-        setShowCoinSelector(type);
-    };
-
-    // Example function called when a coin is selected in the modal
-    const handleCoinSelected = (token: Token) => {
-        if (showCoinSelector === "source") {
-            setSourceToken(token);
-        } else if (showCoinSelector === "dest") {
-            setDestToken(token);
-        }
-        setShowCoinSelector(null);
-    };
-
+    console.log({ tokens })
+    const defaultSourceToken = tokens.find((t) => t.name === "USDT");
+    const defaultDestToken = tokens.find((t) => t.name === "TON");
+    const [sourceToken, setSourceToken] = usePersistedState<Token | undefined>("sourceToken", defaultSourceToken);
+    const [destToken, setDestToken] = usePersistedState<Token | undefined>("destToken", defaultDestToken);
+    const [sourceAmount, setSourceAmount] = useState<string>("");
+    const [destAmount, setDestAmount] = useState<string>("");
+    const [isFetchingTokenPrice, setIsFetchingTokenPrice] = useState<boolean>(false);
     const handleSwap = () => {
         if (!sourceToken || !destToken) {
             alert("Please select both tokens.");
             return;
         }
-        const numericAmount = parseFloat(amount);
+        const numericAmount = parseFloat(sourceAmount);
         if (numericAmount > parseFloat(sourceToken.available.amount.number)) {
             alert("Insufficient balance.");
             return;
         }
         onSwap(sourceToken, destToken, numericAmount);
+        localStorage.removeItem("sourceToken");
+        localStorage.removeItem("destToken");
+        localStorage.removeItem("sourceAmount");
+        localStorage.removeItem("destAmount");
     };
+
+    const handleTokenChange = (side: "source" | "destination", token: Token) => {
+        setDestAmount("0");
+        setSourceAmount("0");
+        if (side === "source") {
+            setSourceToken(token);
+        } else {
+            setDestToken(token);
+        }
+    };
+
+    const handleChangeCoins = () => {
+        setSourceToken(destToken);
+        setDestToken(sourceToken);
+        setSourceAmount(destAmount);
+        setDestAmount(sourceAmount);
+    };
+
+    const handleAmountChange = async (side: "source" | "destination", amount: string) => {
+        setIsFetchingTokenPrice(true)
+        await sleep(300);
+
+        const sourceUSDTPrice = parseFloat(sourceToken?.marketData.find((m) => m.destination === "USDT")?.marketData.latestPrice || "1");
+        const destUSDTPrice = parseFloat(destToken?.marketData.find((m) => m.destination === "USDT")?.marketData.latestPrice || "1");
+        const price = destUSDTPrice / sourceUSDTPrice;
+
+        const changeAmount = side === "source" ? (parseFloat(amount) * price).toFixed(2) : (parseFloat(amount) / price).toFixed(2);
+        setIsFetchingTokenPrice(false)
+        if (side === "source") {
+            setSourceAmount(amount);
+            setDestAmount(changeAmount)
+        } else {
+            setDestAmount(amount);
+            setSourceAmount(changeAmount)
+        }
+    }
 
     return (
         <div className={styles.swapContainer}>
@@ -59,112 +80,28 @@ const SwapCard: React.FC<SwapCardProps> = ({ tokens, onSwap }) => {
             </div>
 
             <div className={styles.swapContent}>
-                <div className={styles.tokenRow + " " + styles.sourceTokenRow}>
-                    <div className={styles.tokenField}>
-                        <span className={styles.label}>You Pay</span>
-
-                        <input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0.0"
-                        />
-
-                        <div className={styles.balance}>
-                            Balance: {sourceToken ? number_format(sourceToken.available.amount.number.toLocaleString()) : "0"} <span>{sourceToken ? sourceToken.name : ""}</span>
-                        </div>
-                    </div>
-                    <div className={styles.tokenSelector}>
-                        <button onClick={() => handleOpenCoinSelector("source")}>
-                            <img
-                                src={`https://cryptofonts.com/img/SVG/${sourceToken?.name.toLowerCase()}.svg`}
-                                alt={sourceToken?.name}
-                            />
-
-                            <span>
-                                {sourceToken ? sourceToken.name : "Select Coin"}
-                            </span>
-                        </button>
-                    </div>
-
-                </div>
-
-                <hr />
-
-                <div className={styles.tokenRow + " " + styles.destTokenRow}>
-                    <div className={styles.tokenField}>
-                        <span className={styles.label}>You Receive</span>
-
-                        <input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0.0"
-                        />
-
-                        <div className={styles.balance}>
-                            Balance: {destToken ? number_format(destToken.available.amount.number.toLocaleString()) : "0"} <span>{destToken ? destToken.name : ""}</span>
-                        </div>
-                    </div>
-                    <div className={styles.tokenSelector}>
-                        <button onClick={() => handleOpenCoinSelector("source")}>
-                            <img
-                                src={`https://cryptofonts.com/img/SVG/${destToken?.name.toLowerCase()}.svg`}
-                                alt={destToken?.name}
-                            />
-
-                            <span>
-                                {destToken ? destToken.name : "Select Coin"}
-                            </span>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-
-            {/* Display Source Token Info */}
-            {/* <div className={styles.tokenRow}>
-                <span className={styles.label}>From</span>
-                <button onClick={() => handleOpenCoinSelector("source")}>
-                    {sourceToken ? sourceToken.name : "Select Coin"}
-                </button>
-                <div className={styles.balance}>
-                    Balance: {sourceToken ? sourceToken.available.amount.number : "0"}
-                </div>
-            </div>
-
-            <div className={styles.amountRow}>
-                <label>You Pay</label>
-                <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.0"
+                <SwapInput
+                    side={"source"}
+                    tokens={tokens}
+                    amount={sourceAmount}
+                    onAmountChange={(amount) => handleAmountChange('source', amount)}
+                    onTokenSelect={(token) => handleTokenChange("source", token)}
+                    currency={sourceToken}
                 />
-            </div> */}
-
-            {/* Display Destination Token Info */}
-            {/* <div className={styles.tokenRow}>
-                <span className={styles.label}>To</span>
-                <button onClick={() => handleOpenCoinSelector("dest")}>
-                    {destToken ? destToken.name : "Select Coin"}
-                </button>
-                <div className={styles.balance}>
-                    Balance: {destToken ? destToken.available.amount.number : "0"}
+                <div style={{ position: "relative", padding: "50px 0" }}>
+                    <button style={{ position: "absolute", borderRadius: "100px", right: "20px", height: "42px", width: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", top: "50%", transform: "translateY(-50%)", outline: "10px solid #333333" }} onClick={handleChangeCoins}><ArrowDownUp size={"24"} color="#3e67d8" /></button>
+                    <div style={{ width: "100%", height: "2px", backgroundColor: "#404040" }}></div>
                 </div>
+                <SwapInput
+                    side={"destination"}
+                    tokens={tokens}
+                    amount={destAmount}
+                    onAmountChange={(amount) => handleAmountChange('destination', amount)}
+                    onTokenSelect={(token) => handleTokenChange("destination", token)}
+                    currency={destToken}
+                />
             </div>
 
-            <div className={styles.amountRow}>
-                <label>You Receive</label>
-                <input
-                    type="text"
-                    value="0.0"
-                    placeholder="Calculated automatically"
-                    disabled
-                />
-            </div> */}
-
-            {/* Example fee info row */}
             <div className={styles.feeRow}>
                 <span>Fee: 0.32% | 8.45 TRX ≈ 1USDT</span>
             </div>
@@ -173,35 +110,12 @@ const SwapCard: React.FC<SwapCardProps> = ({ tokens, onSwap }) => {
             <button
                 className={styles.swapButton}
                 onClick={handleSwap}
-                disabled={!sourceToken || !destToken || !amount}
-            >
+                disabled={!sourceToken || !destToken || !sourceAmount}
+            >{isFetchingTokenPrice ? <Loader /> : <>
                 <ArrowLeftRight size={14} />
                 Swap
-            </button>
-
-            {showCoinSelector && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <div style={{ display: "flex", justifyContent: "start", alignItems: "center", borderBottom: "0.75px solid #4b5563", padding: "0.75rem 0.5rem 0.5rem 0.75rem" }}>
-                            <button onClick={() => setShowCoinSelector(null)} style={{ backgroundColor: "transparent", border: "none", padding: "0 10px" }}>
-                                <XIcon size={24} color="#d1d5db" strokeWidth={"0.75px"} />
-                            </button>
-                            <h4 style={{ marginBottom: "3px", fontWeight: 600, fontSize: "1rem" }}>Please select a coin</h4>
-                        </div>
-                        {tokens.map((token) => (
-                            <div
-                                key={token.name}
-                                className={styles.coinItem}
-                                onClick={() => handleCoinSelected(token)}
-                            >
-                                {token.name}
-                                <span className={styles.coinBalance}>{token.available.amount.number}</span>
-                            </div>
-                        ))}
-                        <button onClick={() => setShowCoinSelector(null)}>Close</button>
-                    </div>
-                </div>
-            )}
+            </>
+                }</button>
         </div>
     );
 };

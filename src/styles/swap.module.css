@@ -8,10 +8,10 @@
   border-radius: 12px;
   color: #fff;
   margin: 0 auto;
-  max-width: 400px;
   padding: 1.5rem;
   position: relative;
   width: 100%;
+  max-width: 100dvw;
 }
 
 /* Inner swap content area */
@@ -20,6 +20,8 @@
   border-radius: 0.75rem;
   color: #fff;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Swap header */
@@ -41,7 +43,7 @@
 
 /* Token field container */
 .tokenField {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   flex-grow: 1;
 }
@@ -189,8 +191,6 @@
 /* Modal overlay for coin selection */
 .modalOverlay {
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
   display: flex;
   height: 100%;
   justify-content: center;
@@ -206,13 +206,23 @@
   border-radius: 12px;
   max-width: 400px;
   width: 90%;
+  z-index: 10;
 }
 
 /* Modal content header */
-.modalContent h4 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  text-align: center;
+.modalContent .modalHeader{
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/*Modal content button*/
+.modalContent .submit {
+  margin: 1rem auto;
+  display: block;
+  width: 80%;
 }
 
 /* =======================
@@ -240,4 +250,37 @@
 .coinBalance {
   color: #999;
   font-size: 0.85rem;
+}
+
+.tokensList {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 2rem;
+  max-height: 60vh;
+  overflow-y: scroll;
+}
+
+.error{
+  color: #a94442;
+  font-size: 0.8rem;
+}
+
+.coinListItem{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid #151515;
+  img{
+    height: 2rem;
+    width: 2rem;
+    object-fit: contain;
+  }
+}
+
+.coinListItemTokenInfo{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
