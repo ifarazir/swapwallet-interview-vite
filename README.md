@@ -1,50 +1,80 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# SwapWallet Interview Vite Project
 
-Currently, two official plugins are available:
+This project is a simple token swap application built with React and Vite. It allows users to swap between different tokens and updates the token balances accordingly.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- Fetches token data from an fake external API.
+- Allows users to select source and destination tokens.
+- Calculates the swap amount based on token prices.
+- Updates token balances and stores them in localStorage.
+- Displays the updated token balances.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Installation
 
-- Configure the top-level `parserOptions` property like this:
+1. Clone the repository:
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+    ```bash
+    git clone https://github.com/ifarazir/swapwallet-interview-vite.git
+    ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. Navigate to the project directory:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+    ```bash
+    cd swapwallet-interview-vite
+    ```
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+3. Install the dependencies:
+
+    ```bash
+    npm install
+    ```
+
+## Usage
+
+1. Start the development server:
+
+    ```bash
+    npm run dev
+    ```
+
+2. Open your browser and navigate to `http://localhost:3000`.
+
+## Components
+
+### `SwapCard`
+
+This component allows users to select source and destination tokens, enter the amount to swap, and perform the swap.
+
+### `SwapInput`
+
+This component is used within `SwapCard` to handle token selection and amount input.
+
+## Hooks
+
+### `useTokens`
+
+This hook fetches token data from an external API and manages the token state. It also handles storing and retrieving token data from localStorage.
+
+## Types
+
+### `Token`
+
+Represents a token with its name, available balance, and market data.
+
+### `Amount`
+
+Represents an amount with a number and unit.
+
+### `MarketDataInfo`
+
+Represents market data information including best buy, best sell, latest price, and day change.
+
+### `MarketData`
+
+Represents market data for a token including source, destination, and market data information.
+
+## License
+
+This project is licensed under the MIT License.
